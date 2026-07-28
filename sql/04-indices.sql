@@ -1,0 +1,2 @@
+CREATE INDEX idx_episodio_vm_data_intubacao ON episodio_vm(data_intubacao);
+CREATE INDEX idx_episodio_vm_data_extubacao ON episodio_vm(data_extubacao);
