@@ -1,0 +1,35 @@
+Table internacao {
+  id_internacao int [pk]
+  prontuario int
+  data_nascimento date
+  genero varchar
+  data_internacao date
+  data_desfecho date
+  desfecho varchar
+}
+
+Table episodio_vm {
+  id_episodio_vm int [pk]
+  id_internacao int [ref: > internacao.id_internacao]
+  data_intubacao date
+  data_extubacao date
+}
+
+Table avaliacao_mobilizacao {
+  id_avaliacao int [pk]
+  id_internacao int [ref: > internacao.id_internacao]
+  data_avaliacao date
+  codigo_nivel int [ref: > dominio_nivel_mobilizacao.codigo_nivel]
+  mrc int
+}
+
+Table dominio_nivel_mobilizacao {
+  codigo_nivel int [pk]
+  descricao varchar
+}
+
+Table traqueostomia {
+  id_tqt int [pk]
+  id_internacao int [ref: > internacao.id_internacao]
+  data_traqueostomia date
+}
