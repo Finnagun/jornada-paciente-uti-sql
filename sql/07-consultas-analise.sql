@@ -1,9 +1,13 @@
 -- ============================================================================
 -- ETAPA 7 — CONSULTAS SQL DE ANÁLISE
 -- ============================================================================
--- Este arquivo é construído incrementalmente ao longo da Etapa 7, respondendo
--- às perguntas de negócio definidas na Etapa 1 (ver docs/01-entendimento-do-
--- problema.md), com queries de complexidade crescente.
+-- Este arquivo responde às perguntas de negócio definidas na Etapa 1 (ver
+-- docs/01-entendimento-do-problema.md), com queries de complexidade crescente.
+--
+-- Uma pergunta adicional (MRC x histórico de IOT) foi formulada, testada e
+-- posteriormente revisada/removida deste escopo por limitações técnicas e
+-- conceituais identificadas durante a análise. Ver docs/08-perguntas-
+-- revisadas.md para o registro completo dessa decisão.
 -- ============================================================================
 
 
@@ -20,6 +24,8 @@ FROM internacao;
 -- ----------------------------------------------------------------------------
 -- 2. Existe diferença no tempo de permanência entre pacientes que
 --    participaram da mobilização precoce e os que não participaram?
+--    (Esta consulta também responde à pergunta: "existe relação entre tempo
+--    de internação e participação no protocolo?", ver consulta 6)
 -- ----------------------------------------------------------------------------
 SELECT
     participacao_protocolo,
@@ -44,7 +50,9 @@ GROUP BY participacao_protocolo;
 --
 -- Interpretação: pacientes que participaram do protocolo de mobilização
 -- precoce apresentaram tempo médio de permanência menor (15 dias) comparado
--- aos que não participaram (18 dias).
+-- aos que não participaram (18 dias). Isso também indica uma relação entre
+-- tempo de internação e participação: pacientes com internações mais curtas
+-- tendem a estar no grupo "Participou" nesta base.
 --
 -- RESSALVA IMPORTANTE: a decisão de participação no protocolo, nesta base de
 -- dados, está associada à gravidade clínica do paciente — pacientes mais
@@ -261,3 +269,81 @@ GROUP BY
 -- possível influência de mobilização contínua entre uma falha e uma
 -- segunda tentativa bem-sucedida) fica registrada como ideia para uma
 -- futura V2 do projeto.
+
+
+-- ----------------------------------------------------------------------------
+-- 6. Quantos pacientes participaram do protocolo de mobilização precoce?
+-- ----------------------------------------------------------------------------
+SELECT
+    sub.aderencia_mobilizacao_precoce,
+    COUNT(*) AS total_pacientes
+FROM (
+    SELECT
+        i.id_internacao,
+        CASE
+            WHEN id_avaliacao IS NOT NULL THEN 'Participou'
+            ELSE 'Não participou'
+        END AS aderencia_mobilizacao_precoce
+    FROM internacao i
+    LEFT JOIN avaliacao_mobilizacao m
+        ON i.id_internacao = m.id_internacao
+    GROUP BY i.id_internacao
+) AS sub
+GROUP BY
+    sub.aderencia_mobilizacao_precoce;
+
+-- Resultado: Participou = 664 (66,4%) | Não participou = 336 (33,6%)
+--
+-- A relação entre esse resultado e o tempo de internação já está registrada
+-- na consulta 2 (18 dias vs 15 dias) — a mesma consulta responde às duas
+-- perguntas relacionadas.
+
+
+-- ----------------------------------------------------------------------------
+-- 7. Pacientes traqueostomizados tiveram falha de extubação prévia?
+--    Quantas tentativas de VM tiveram antes da TQT?
+-- ----------------------------------------------------------------------------
+
+-- 7a. Contagem de episódios de VM por paciente traqueostomizado:
+SELECT
+    t.id_internacao,
+    COUNT(ev.id_episodio_vm) AS qtd_episodios_vm
+FROM traqueostomia t
+INNER JOIN episodio_vm ev
+    ON t.id_internacao = ev.id_internacao
+GROUP BY t.id_internacao;
+
+-- 7b. Classificação consolidada: com falha prévia (2 episódios) vs
+--     VM prolongada sem falha (1 episódio):
+SELECT
+    x.realizado_tqt,
+    COUNT(*) AS total_pacientes
+FROM (
+    SELECT
+        t.id_internacao,
+        CASE
+            WHEN COUNT(ev.id_episodio_vm) = 1 THEN 'Sem falha prévia / VM prolongada'
+            ELSE 'Com falha prévia'
+        END AS realizado_tqt
+    FROM traqueostomia t
+    INNER JOIN episodio_vm ev
+        ON t.id_internacao = ev.id_internacao
+    GROUP BY t.id_internacao
+) x
+GROUP BY x.realizado_tqt;
+
+-- Resultado: Com falha prévia = 48 | Sem falha prévia / VM prolongada = 27
+-- (total: 75 traqueostomias, consistente com a contagem validada na Etapa 6)
+--
+-- Interpretação: a maioria dos pacientes traqueostomizados (64%) chegou a
+-- esse desfecho após uma falha de extubação e reintubação (Caminho 1 da
+-- árvore de decisão), enquanto uma parcela menor (36%) evoluiu diretamente
+-- por ventilação mecânica prolongada, sem nunca ter tentado extubar
+-- (Caminho 2). Essa proporção é coerente com a calibração definida em
+-- docs/07-arvore-decisao-geracao-dados.md.
+--
+-- Nota técnica: esta consulta se beneficia de uma característica estrutural
+-- da base — como o número máximo de episódios de VM por internação foi
+-- limitado a 2 (decisão de simplificação da Etapa 6), a contagem de
+-- episódios já identifica diretamente o caminho percorrido, sem necessidade
+-- de repetir a lógica de LEAD()/CASE WHEN da consulta 3.
