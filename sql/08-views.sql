@@ -2,15 +2,14 @@
 -- ETAPA 8 — VIEWS
 -- ============================================================================
 -- Este arquivo consolida as Views criadas a partir das consultas de análise
--- já validadas na Etapa 7 (ver sql/07-consultas-analise.sql).
+-- já validadas na Etapa 7 (ver sql/07-consultas-analise.sql), além de duas
+-- Views novas criadas especificamente para dar suporte à página de "Jornada
+-- Individual do Paciente" do dashboard (Etapa 9).
 --
 -- Critério de seleção: apenas consultas que representam um RESULTADO FINAL,
 -- interpretável e reutilizável (potenciais fontes de dashboard) viraram
 -- Views. Consultas que serviam apenas como etapa intermediária de cálculo
--- para outras consultas (a classificação individual por episódio de VM, e a
--- contagem de episódios por paciente traqueostomizado) não foram
--- transformadas em View, permanecendo documentadas apenas no arquivo de
--- consultas da Etapa 7.
+-- para outras consultas não foram transformadas em View.
 -- ============================================================================
 
 
@@ -226,3 +225,112 @@ FROM (
     GROUP BY t.id_internacao
 ) x
 GROUP BY x.realizado_tqt;
+
+
+-- ----------------------------------------------------------------------------
+-- vw_cabecalho
+-- Resumo consolidado (uma linha por internação) para a página de Jornada
+-- Individual do Paciente: dados fixos, tempo de permanência, indicadores de
+-- mobilização e VM/TQT. Não inclui nome (LGPD) nem MRC individual (ver
+-- docs/09-views.md para a justificativa dessa decisão).
+-- ----------------------------------------------------------------------------
+CREATE VIEW vw_cabecalho AS
+SELECT
+    i.id_internacao,
+    i.prontuario,
+    CAST((julianday(i.data_internacao) - julianday(i.data_nascimento)) / 365.25 AS INTEGER) AS idade,
+    i.genero,
+    i.data_internacao,
+    i.data_desfecho,
+    i.desfecho,
+    ROUND(julianday(i.data_desfecho) - julianday(i.data_internacao), 0) AS tempo_internacao,
+    COALESCE(am.qtd_avaliacoes_mobilizacao, 0) AS qtd_avaliacoes_mobilizacao,
+    COALESCE(vm.qtd_episodios_vm, 0) AS qtd_episodios_vm,
+    t.data_traqueostomia
+FROM internacao i
+
+-- Subquery 1: Avaliações de Mobilização
+LEFT JOIN (
+    SELECT
+        id_internacao,
+        COUNT(DISTINCT id_avaliacao) AS qtd_avaliacoes_mobilizacao
+    FROM avaliacao_mobilizacao
+    GROUP BY id_internacao
+) am ON i.id_internacao = am.id_internacao
+
+-- Subquery 2: Episódios de Ventilação Mecânica (VM)
+LEFT JOIN (
+    SELECT
+        id_internacao,
+        COUNT(id_episodio_vm) AS qtd_episodios_vm
+    FROM episodio_vm
+    GROUP BY id_internacao
+) vm ON i.id_internacao = vm.id_internacao
+
+-- Subquery 3: Traqueostomia
+LEFT JOIN (
+    SELECT
+        id_internacao,
+        data_traqueostomia
+    FROM traqueostomia
+) t ON i.id_internacao = t.id_internacao;
+
+
+-- ----------------------------------------------------------------------------
+-- vw_linha_tempo_paciente
+-- Linha do tempo de eventos clínicos de cada internação (Internação,
+-- Intubação, Extubação, Traqueostomia, Desfecho), unificados via UNION ALL
+-- e ordenados cronologicamente por paciente. Usada junto com vw_cabecalho
+-- para compor a página de Jornada Individual do Paciente.
+-- ----------------------------------------------------------------------------
+CREATE VIEW vw_linha_tempo_paciente AS
+-- 1. Internação
+SELECT
+    id_internacao,
+    data_internacao AS data_evento,
+    'Internação' AS tipo_evento,
+    'Paciente foi internado' AS descricao_evento
+FROM internacao
+UNION ALL
+-- 2. Intubação
+SELECT
+    id_internacao,
+    data_intubacao AS data_evento,
+    'Intubação' AS tipo_evento,
+    'Paciente foi intubado' AS descricao_evento
+FROM episodio_vm
+WHERE data_intubacao IS NOT NULL
+UNION ALL
+-- 3. Extubação
+SELECT
+    id_internacao,
+    data_extubacao AS data_evento,
+    'Extubação' AS tipo_evento,
+    'Paciente foi extubado' AS descricao_evento
+FROM episodio_vm
+WHERE data_extubacao IS NOT NULL
+UNION ALL
+-- 4. Traqueostomia
+SELECT
+    id_internacao,
+    data_traqueostomia AS data_evento,
+    'Traqueostomia' AS tipo_evento,
+    'Paciente foi traqueostomizado' AS descricao_evento
+FROM traqueostomia
+WHERE data_traqueostomia IS NOT NULL
+UNION ALL
+-- 5. Desfecho
+SELECT
+    id_internacao,
+    data_desfecho AS data_evento,
+    CASE
+        WHEN desfecho = 'alta' THEN 'Alta'
+        WHEN desfecho = 'obito' THEN 'Óbito'
+    END AS tipo_evento,
+    CASE
+        WHEN desfecho = 'alta' THEN 'Paciente recebeu alta hospitalar'
+        WHEN desfecho = 'obito' THEN 'Paciente evoluiu para óbito'
+    END AS descricao_evento
+FROM internacao
+WHERE data_desfecho IS NOT NULL
+ORDER BY id_internacao, data_evento ASC;
