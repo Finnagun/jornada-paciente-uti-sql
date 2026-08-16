@@ -33,8 +33,9 @@ def decidir_participacao_mobilizacao(foi_intubado, teve_complicacao):
 
 def gerar_avaliacoes_mobilizacao(data_internacao, data_desfecho):
     """
-    Gera uma lista de avaliações de mobilização a cada 48h, começando na
-    data de internação e indo até a data de desfecho (inclusive).
+    Gera uma lista de avaliações de mobilização, com a primeira ocorrendo no
+    dia da internação (avaliação inicial/admissional) e as seguintes a cada
+    48h, até a data de desfecho (inclusive).
 
     Parâmetros:
         data_internacao (date): data de início da internação

@@ -34,7 +34,7 @@ de extubação?
 |---|----------|------------|
 | 1 | Internação | Tabela principal. PK: `id_internacao`. Contém `prontuario` como atributo (não é único na tabela — permite representar futuras reinternações da mesma pessoa, mesmo que essa relação não seja explorada no V1). |
 | 2 | Episódios de Ventilação Mecânica | Tabela filha — pode haver múltiplas linhas por internação (reintubações). |
-| 3 | Avaliações de Mobilização/Funcionalidade | Tabela filha — repete a cada 48h (nível de mobilização, MRC, marcos como sentar/ficar em pé). |
+| 3 | Avaliações de Mobilização/Funcionalidade | Tabela filha — primeira avaliação no dia da internação (admissional), demais repetindo a cada 48h (nível de mobilização, MRC, marcos como sentar/ficar em pé). |
 | 4 | Domínio: Níveis de Mobilização | Tabela de referência (lookup), evita repetição de descrição dos níveis. |
 | 5 | Traqueostomia | Tabela filha — só existe registro para quem realizou o procedimento. |
 

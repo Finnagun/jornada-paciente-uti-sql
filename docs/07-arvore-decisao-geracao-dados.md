@@ -8,7 +8,8 @@ estruturada apenas com a sequência de perguntas e dependências entre elas:
 1. Gerar dados fixos da internação (idade, sexo, data_internacao)
 
 2. Decidir participação no protocolo de mobilização (independente de VM)
-   - se sim: gerar avaliações a cada 48h até a alta/óbito (com possíveis NULLs em
+   - se sim: gerar avaliação inicial no dia da internação, seguida de
+     reavaliações a cada 48h até a alta/óbito (com possíveis NULLs em
      mrc/nivel se paciente RASS baixo)
 
 3. Decidir se foi intubado
