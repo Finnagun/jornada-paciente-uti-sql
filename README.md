@@ -5,7 +5,7 @@
 > instituições de saúde reais. Ver seção [Sobre os dados](#sobre-os-dados) para
 > detalhes de como a base foi calibrada.
 
-📊 **[Acesse o dashboard interativo publicado](https://bit.ly/3SgOYe0)**
+📊 **[Acesse o dashboard interativo publicado](https://tinyurl.com/yysr35fr)**
 
 ---
 
@@ -112,7 +112,7 @@ Outros achados:
 ## Dashboard
 
 O dashboard interativo, publicado no Power BI, está disponível em:
-**[bit.ly/3SgOYe0](https://bit.ly/3SgOYe0)**
+**[tinyurl.com/yysr35fr](https://tinyurl.com/yysr35fr)**
 
 Estrutura:
 1. **Capa** — navegação entre as duas páginas de análise.
