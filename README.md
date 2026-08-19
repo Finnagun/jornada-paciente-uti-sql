@@ -11,7 +11,7 @@
 
 ## Sobre o autor e motivação
 
-Meu nome é Carlos Henrique Freitas (Finnagun), sou fisioterapeuta intensivista com
+Meu nome é Carlos Henrique Freitas, sou fisioterapeuta intensivista com
 mais de 10 anos de atuação em UTI, atualmente em transição de carreira para a área de
 dados. Este é meu primeiro grande projeto de SQL — 100% autoral, desde a concepção da
 ideia até a modelagem do banco, geração dos dados, análises e construção do dashboard.
@@ -152,6 +152,6 @@ diretamente no Power BI Desktop, com conexão ODBC ao banco `data/uti.db`.
 
 ---
 
-*Projeto desenvolvido por Carlos Henrique Freitas (Finnagun) como parte de estudos
+*Projeto desenvolvido por Carlos Henrique Freitas como parte de estudos
 independentes em SQL e análise de dados, com foco em aplicação prática na área da
 saúde.*

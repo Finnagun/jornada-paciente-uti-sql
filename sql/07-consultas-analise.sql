@@ -46,10 +46,10 @@ FROM (
 ) AS subquery_pacientes
 GROUP BY participacao_protocolo;
 
--- Resultado: Não participou = 18 dias | Participou = 15 dias
+-- Resultado: Não participou = 18 dias | Participou = 10 dias
 --
 -- Interpretação: pacientes que participaram do protocolo de mobilização
--- precoce apresentaram tempo médio de permanência menor (15 dias) comparado
+-- precoce apresentaram tempo médio de permanência menor (10 dias) comparado
 -- aos que não participaram (18 dias). Isso também indica uma relação entre
 -- tempo de internação e participação: pacientes com internações mais curtas
 -- tendem a estar no grupo "Participou" nesta base.
